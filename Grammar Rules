@@ -1,0 +1,6 @@
+This is jsut to grather the rules we will use for grammar. So we can both build it here and use the same one with the same format
+
+I think it is better to use dictionary to do so. if you have better way, let me know please
+
+
+rules= {"NP VP": "S"}
