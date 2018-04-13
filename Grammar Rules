@@ -1,6 +1,25 @@
 This is jsut to grather the rules we will use for grammar. So we can both build it here and use the same one with the same format
 
 I think it is better to use dictionary to do so. if you have better way, let me know please
-
+NEED TO CONVERT THESE RULE IN PENN TREE BANK TAGS TOO
 
 rules= {"NP VP": "S"}
+
+
+S--> NP VP
+NP --> Pronoun
+NP--> ProperNoun
+NP--> Det Nominal
+NP --> NP CC NP
+NP --> JJ Noun
+Nominal --> Noun
+Nominal --> Nominal Noun
+Nominal --> Nominal PP
+VP --> Verb
+VP --> Verb NP
+VP --> Verb NP PP
+VP - Verb PP
+VP --> VP PP
+VP--> VP CC VP
+VP--> TO VP
+PP --> Prepositiobn NP
