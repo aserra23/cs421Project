@@ -1,6 +1,7 @@
 import nltk
 
 nltk.download()
+
 nltk.download('wordnet')
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
@@ -33,13 +34,6 @@ wrong_verb_combo =['TO VBD', 'TO VBG', 'TO VBN', 'TO VBZ', 'MD VBD', 'MD VBG', '
                
 wrong_sub_v_combo = ['NN VB', 'NN VBP', 'NNS VBZ', 'NNP VB', 'NNP VBP', 'NNPS VBZ','PRPP VBZ', 'PRPS VB', 'PRPS VBP']
 
-
-#text = ("I had killed the tiger.")
-
-#tokens = word_tokenize(text)
-#tagged_tokens = pos_tag(tokens)
-
-#print(tagged_tokens)
 
 
 def CKY(Tag_List):
@@ -93,13 +87,13 @@ def CountSpelling(Essay_str):
     #Dict = set(wn.words())   # this one didn't have so many words: ex with, this, that... same as using wn.synset(). 
     Dict = set(brown.words())
     tokens = word_tokenize(Essay_str)
-   # print("---", tokens)
+
     for word in tokens:
         word_count+=1
         check= word in Dict
         if check == False and word != "n't":
             Spelling_Count += 1
-            #print(word)                       # print the mispelled word -- TODO can delete later
+
 
     return int(word_count/(Spelling_Count+0.0001))
 
@@ -109,7 +103,7 @@ def CountSpelling(Essay_str):
 def check_sub_verb(Tag_List, Word_List):
     count = 0
     i=0
-    #sub_que = []
+
     temp=""
 
     for i in range(0, len(Tag_List)-1):
@@ -124,7 +118,7 @@ def check_sub_verb(Tag_List, Word_List):
         if temp in wrong_sub_v_combo:
             count = count+1
             #print("WWWWWwrong tag: ",temp, "words are: ", Word_List[i], Word_List[i+1])
-    #print("count of wrong sub verb: ", count)
+
     return count
 
 
@@ -169,19 +163,19 @@ def Check_Sub_verb(Essay_str, filename, fw):
     wrong_combo =0
     missing_V =0
     Sub_verb_match =0
-    #print(sentences)
+
     #POS tag each sentence 1 by 1
     for sentence in sentences:
        tokens = word_tokenize(sentence)  # make each sentence into tokens 
        tagged_tokens = pos_tag(tokens)
-       #print(tagged_tokens)
+
        #break word and tag into 2 lists (can't use dictionary because 'key' is not unique
        for W_T_pair in tagged_tokens:
           # result += '[' + W_T_pair[0] + '/' + W_T_pair[1] + '] '
            Tag_List += [W_T_pair[1]]                          # This will put the whole essay tags into 1 list. LOST the purpose to do sentence 1 by 1
            Word_List += [W_T_pair[0]]
           
-          # TODO: should do something for this sentece before he end of this loop then reset all those 3 for next sentence
+
       
        count_verb = count_verb + CountVerbs(Tag_List)  # count the total verb we have in 1 essay
        count_word += len(Tag_List)
@@ -208,9 +202,9 @@ def Check_Sub_verb(Essay_str, filename, fw):
        Word_List=[]      # reset word for next sentence
     
     # useing average 3 verbs per sentence
-    #print(count_verb/3) 
+     
     Essay_Len = int(((count_verb/3) + len(sentences)))/2
-    # TOCheck later assign score 1 to 5 for essay length:  11- = 1, 12-14 = 2, 15-17=3, 17-20 = 4, 20+ = 5 ?
+    
     if Essay_Len <=11:
         Essay_Len_score = 1
     elif Essay_Len <=14:
@@ -228,7 +222,7 @@ def Check_Sub_verb(Essay_str, filename, fw):
 
     Spelling = CountSpelling(Essay_str)
     
-    # TODO set score for spelling 0-4. 10- =4, 11-20 = 3, 21-30=2, 31-40=1, 41+ =0 
+
     if Spelling >=30:
         Spelling_reduce = 0
     elif Spelling >=24:
@@ -245,7 +239,7 @@ def Check_Sub_verb(Essay_str, filename, fw):
     
     verb_per_mismatch =  count_verb / (Sub_verb_match+0.0001)
 
-    #TODO: set score by verb per mismatch ratio. low = 25.2 high = 42.7,  16- = 1, 17-26 =2, 27-35 = 3, 36-44=4, 45+ = 5
+
     if verb_per_mismatch <=16:
         Sub_Verb_score = 1
     elif verb_per_mismatch <=26:
@@ -293,21 +287,6 @@ def Check_Sub_verb(Essay_str, filename, fw):
     if Missing_Verb_score >5:
         Missing_Verb_score =5
   
-    #print("missing verb ration: ", count_verb, Missing_verb_Ratio)
-
-    #print("Ratio: ", verb_per_mismatch)
-
-
-    #print("This essay has ", Sub_verb_match, "mismatch")
-    #print("Essay length: ", Essay_Len, "score =", Essay_Len_score)
-
-    print("total verb compare: ",count_verb, "  ", count_word )
-    #print("words per spelling mistake: ", Spelling, "Spelling error reduce= ", Spelling_reduce)
-
-    
-
-    #print("total missing verb: ", missing_V)  # good to check if there is no verb at all in a sentence
-    #print("Wrong Combo verb: ", wrong_combo) 
 
     
 
@@ -331,14 +310,14 @@ def Check_Sub_verb(Essay_str, filename, fw):
     #fw.write(str(Essay_Len_score)+"; " )
     
     
-    print("Final score is: ", Final_Score)
-    print("This essay is graded: ", Essay_grade)
+    #print("Final score is: ", Final_Score)
+    #print("This essay is graded: ", Essay_grade)
 
 def Main():
     
-    #read all teh files names as string store in list
+    #read all the files names as string store in list
     All_files = os.listdir("../input/testing/essays")	
-	
+    
     file_write = open("../output/result.txt", 'w')
         
 
@@ -349,6 +328,7 @@ def Main():
 
     for f in All_files:
         filename = "../input/testing/essays/"+f
+
     # open file and read them as a string  
         if os.path.isfile(filename) :
            file = open (filename, "r")
