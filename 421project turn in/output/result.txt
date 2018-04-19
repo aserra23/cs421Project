@@ -1,9 +1,0 @@
-H1.txt; 5; 0; 5; 5; 0; 0; 0; 20; Unknown
-H2.txt; 4; 2; 5; 4; 0; 0; 0; 15; Unknown
-H3.txt; 5; 0; 5; 4; 0; 0; 0; 19; Unknown
-H4.txt; 5; 0; 5; 5; 0; 0; 0; 20; Unknown
-H5.txt; 5; 1; 5; 5; 0; 0; 0; 19; Unknown
-H6.txt; 5; 0; 5; 5; 0; 0; 0; 20; Unknown
-H7.txt; 4; 1; 5; 5; 0; 0; 0; 17; Unknown
-H8.txt; 5; 0; 5; 5; 0; 0; 0; 20; Unknown
-H9.txt; 5; 0; 5; 5; 0; 0; 0; 20; Unknown
