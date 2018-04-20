@@ -12,8 +12,6 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('maxent_ne_chunker')
 nltk.download('treebank')
 
-from nltk.corpus import brown
-
 if __name__ == '__main__':
 
     # read all the files names as string store in list
