@@ -1,11 +1,13 @@
 import nltk
 import re
+import os
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import brown
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import wordnet as wn
 from nltk import pos_tag
+from nltk.parse.stanford import StanfordParser
 from nltk.stem import WordNetLemmatizer
 #from nltk.corpus import treebank
 
@@ -49,6 +51,7 @@ class EssayGrader:
     subject_verb_disagreement_count = None
     missing_verb_count = None
     verb_tense_disagreement_or_misuse = None
+    fragment_count = None
 
     # class constructor
     def __init__(self, filename_path, filename, result_writer):
@@ -85,6 +88,9 @@ class EssayGrader:
 
         # get verb tense disagreement count, and/or misuse of verb count
         self.verb_tense_disagreement_or_misuse = self.get_verb_tense_disagreement_or_misuse(tagged_sent_tokens)
+
+        #get fragment count
+        self.fragment_count = self.count_fragments()
 
     def get_subject_verb_disagreement(self, tagged_sent_tokens):
 
@@ -150,6 +156,27 @@ class EssayGrader:
                     disagreement_misuse_count += 1
 
         return disagreement_misuse_count
+
+    def count_fragments(self):
+
+        frag_count = 0
+
+        for sentence in self.sentences_of_essay:
+            tree_data_iterator = self.parse_tree(sentence)
+            tree_data = next(tree_data_iterator)
+            frag = 0
+            if 'FRAG' == tree_data[frag].label():
+                frag_count += 1
+        print('fragmented sentences: ', str(frag_count))
+        return frag_count
+
+    def parse_tree(self, text):
+        os.environ['STANFORD_PARSER']=os.getcwd() + "/stanford-parser-full-2018-02-27"
+        os.environ['STANFORD_MODELS']=os.getcwd() + "/stanford-parser-full-2018-02-27"
+
+        stanford_parser = StanfordParser(model_path="edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz")
+        result = stanford_parser.raw_parse(text)
+        return result
 
     def determine_sub_and_final_scores(self):
         # get sub-scores
@@ -242,9 +269,11 @@ class EssayGrader:
             return self._helper_compute_verb_score(5)
 
     def compute_sentence_formation_score(self):
+        # manipulate self.fragment_count here
         return 0
 
     def compute_essay_coherent_score(self):
+        #get pronouns remove anything that isnt third person
         return 0
 
     def compute_final_score(self):
