@@ -20,6 +20,8 @@ class EssayGrader:
     subject_tags_P = ['NNS', 'NNPS']
     subject_tags_S = ['NN', 'NNP']
     PRP_words = ['you', 'You', 'we', 'We', 'they', 'They', 'I', 'i']
+    third_person_single_pronouns = ['he', 'she', 'it', 'his', 'hers', 'him', 'her']
+    third_person_plural_pronouns = ['they', 'them', 'their']
     wrong_verb_combo = ['TO VBD', 'TO VBG', 'TO VBN', 'TO VBZ', 'MD VBD', 'MD VBG', 'MD VBN', 'MD VBZ', 'VBZ VB', 'VBZ VBD', 'VBZ VBP', 'VBZ VBZ', 'VBP VB', 'VBP VBD', 'VBP VBP', 'VBP VBZ']
     wrong_sub_v_combo = ['NN VB', 'NN VBP', 'NNS VBZ', 'NNP VB', 'NNP VBP', 'NNPS VBZ','PRPP VBZ', 'PRPS VB', 'PRPS VBP']
 
@@ -52,6 +54,7 @@ class EssayGrader:
     missing_verb_count = None
     verb_tense_disagreement_or_misuse = None
     fragment_count = None
+    coherent_count = None
 
     # class constructor
     def __init__(self, filename_path, filename, result_writer):
@@ -89,8 +92,11 @@ class EssayGrader:
         # get verb tense disagreement count, and/or misuse of verb count
         self.verb_tense_disagreement_or_misuse = self.get_verb_tense_disagreement_or_misuse(tagged_sent_tokens)
 
-        #get fragment count
+        # get fragment count
         self.fragment_count = self.count_fragments()
+
+        # get coherent count
+        self.coherent_count = self.count_third_person_pronouns_that_map_to_entity(tagged_sent_tokens)
 
     def get_subject_verb_disagreement(self, tagged_sent_tokens):
 
@@ -168,11 +174,29 @@ class EssayGrader:
             if 'FRAG' == tree_data[frag].label():
                 frag_count += 1
         print('fragmented sentences: ', str(frag_count))
-        return frag_count
+        return -float(frag_count)
+
+    def count_third_person_pronouns_that_map_to_entity(self,tagged_sent_tokens):
+        reverse_sentence_order = [sentence[::-1] for sentence in tagged_sent_tokens[::-1]]
+        word_index = 0
+        third_person_pronouns = []
+
+        for sentence in reverse_sentence_order:
+
+            for word_tag_index in range(len(sentence)):
+                if sentence[word_tag_index][word_index] in self.third_person_single_pronouns or sentence[word_tag_index][word_index] in self.third_person_plural_pronouns:
+                    print('sentence')
+                    third_person_pronouns.append(word_tag_index)
+
+        print('done')
+        
+        # TODO return value here
+        return 0
+
 
     def parse_tree(self, text):
-        os.environ['STANFORD_PARSER']=os.getcwd() + "/stanford-parser-full-2018-02-27"
-        os.environ['STANFORD_MODELS']=os.getcwd() + "/stanford-parser-full-2018-02-27"
+        os.environ['STANFORD_PARSER']= os.getcwd() + "/stanford-parser-full-2018-02-27"
+        os.environ['STANFORD_MODELS']= os.getcwd() + "/stanford-parser-full-2018-02-27"
 
         stanford_parser = StanfordParser(model_path="edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz")
         result = stanford_parser.raw_parse(text)
@@ -269,8 +293,8 @@ class EssayGrader:
             return self._helper_compute_verb_score(5)
 
     def compute_sentence_formation_score(self):
-        # manipulate self.fragment_count here
-        return 0
+        # return a negative value from 1.0 to 0.0
+        return round(self.fragment_count/float(self.sentence_count), 2)
 
     def compute_essay_coherent_score(self):
         #get pronouns remove anything that isnt third person
@@ -287,7 +311,7 @@ class EssayGrader:
 
         # formula given by project part 1
         # TODO verify its the same for part 2
-        return (2 * a) - b + ci + cii + (2 * ciii) + (2 * di) + (3 * dii)
+        return round((2 * a) - b + ci + cii + (2 * ciii) + (2 * di) + (3 * dii), 2)
 
     def determine_classifier(self):
         if self.sentence_count < 10:
