@@ -5,11 +5,8 @@ import os
 from nltk.tokenize import word_tokenize
 from nltk.corpus import brown
 from nltk.tokenize import sent_tokenize
-from nltk.corpus import wordnet as wn
 from nltk import pos_tag
 from nltk.parse.stanford import StanfordParser
-from nltk.stem import WordNetLemmatizer
-#from nltk.corpus import treebank
 
 
 class EssayGrader:
@@ -20,8 +17,14 @@ class EssayGrader:
     subject_tags_P = ['NNS', 'NNPS']
     subject_tags_S = ['NN', 'NNP']
     PRP_words = ['you', 'You', 'we', 'We', 'they', 'They', 'I', 'i']
-    third_person_single_pronouns = ['he', 'she', 'it', 'his', 'hers', 'him', 'her']
+    
+    third_person_single_pronouns_male = ['he', 'his', 'him']
+    third_person_single_pronouns_female = ['she', 'hers', 'her']
+    third_person_single_pronouns_neutral = ['it']
     third_person_plural_pronouns = ['they', 'them', 'their']
+
+    noun_tag_set = ['NNPS', 'NNS', 'NNP', 'NN']
+    
     wrong_verb_combo = ['TO VBD', 'TO VBG', 'TO VBN', 'TO VBZ', 'MD VBD', 'MD VBG', 'MD VBN', 'MD VBZ', 'VBZ VB', 'VBZ VBD', 'VBZ VBP', 'VBZ VBZ', 'VBP VB', 'VBP VBD', 'VBP VBP', 'VBP VBZ']
     wrong_sub_v_combo = ['NN VB', 'NN VBP', 'NNS VBZ', 'NNP VB', 'NNP VBP', 'NNPS VBZ','PRPP VBZ', 'PRPS VB', 'PRPS VBP']
 
@@ -54,7 +57,7 @@ class EssayGrader:
     missing_verb_count = None
     verb_tense_disagreement_or_misuse = None
     fragment_count = None
-    coherent_count = None
+    third_person_unmatched_count = None
 
     # class constructor
     def __init__(self, filename_path, filename, result_writer):
@@ -95,8 +98,8 @@ class EssayGrader:
         # get fragment count
         self.fragment_count = self.count_fragments()
 
-        # get coherent count
-        self.coherent_count = self.count_third_person_pronouns_that_map_to_entity(tagged_sent_tokens)
+        # get unmatched 3rd person pronouns count
+        self.third_person_unmatched_count = self.count_third_person_pronouns_that_map_to_entity(tagged_sent_tokens)
 
     def get_subject_verb_disagreement(self, tagged_sent_tokens):
 
@@ -174,24 +177,114 @@ class EssayGrader:
             if 'FRAG' == tree_data[frag].label():
                 frag_count += 1
         print('fragmented sentences: ', str(frag_count))
+        # TODO Should we keep this negative
         return -float(frag_count)
 
     def count_third_person_pronouns_that_map_to_entity(self,tagged_sent_tokens):
         reverse_sentence_order = [sentence[::-1] for sentence in tagged_sent_tokens[::-1]]
+
+        sentence_count = len(reverse_sentence_order)
         word_index = 0
+        tag_index = 1
         third_person_pronouns = []
 
-        for sentence in reverse_sentence_order:
+        total_third_person_count = 0
+        total_nouns = 0
 
-            for word_tag_index in range(len(sentence)):
-                if sentence[word_tag_index][word_index] in self.third_person_single_pronouns or sentence[word_tag_index][word_index] in self.third_person_plural_pronouns:
-                    print('sentence')
-                    third_person_pronouns.append(word_tag_index)
+        for sentence_index in range(sentence_count):
 
-        print('done')
-        
-        # TODO return value here
-        return 0
+            sentence = reverse_sentence_order[sentence_index]
+            word_count = len(sentence)
+
+            # loop that gets location of third person pronouns
+            for word_tag_index in range(word_count):
+
+                word = sentence[word_tag_index][word_index].lower()
+                tag = sentence[word_tag_index][tag_index]
+
+                if word in self.third_person_single_pronouns_male:
+                    third_person_pronouns.append([sentence_index, word, word_tag_index, 'SPM'])
+                    total_third_person_count += 1
+                elif word in self.third_person_single_pronouns_female:
+                    third_person_pronouns.append([sentence_index, word_tag_index, word, 'SPF'])
+                    total_third_person_count += 1
+                elif word in self.third_person_single_pronouns_neutral:
+                    third_person_pronouns.append([sentence_index, word_tag_index, word, 'SPN'])
+                    total_third_person_count += 1
+                elif word in self.third_person_plural_pronouns:
+                    third_person_pronouns.append([sentence_index, word_tag_index, word, 'PP'])
+                    total_third_person_count += 1
+                elif tag in self.noun_tag_set:
+                    third_person_pronouns.append([sentence_index, word_tag_index, word, tag])
+                    total_nouns += 1
+
+        unmatched_third_person = 0
+
+        while third_person_pronouns != []:
+            info = third_person_pronouns.pop(0)
+
+            if info[3] is 'SPM':
+                #print('male')
+
+                found_noun_match = False
+
+                for data in third_person_pronouns:
+                    if data[3] == 'NNP' and (info[0] == data[0] or info[0] == data[0] - 1):
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+
+                if found_noun_match is False:
+                    unmatched_third_person += 1
+
+            elif info[3] is 'SPF':
+                #print('female')
+
+                found_noun_match = False
+
+                for data in third_person_pronouns:
+                    if data[3] == 'NNP' and (info[0] == data[0] or info[0] == data[0] - 1):
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+
+                if found_noun_match is False:
+                    unmatched_third_person += 1
+
+            elif info[3] is 'SPN':
+                #print('neutral')
+
+                found_noun_match = False
+
+                for data in third_person_pronouns:
+                    if data[3] == 'NN' and (info[0] == data[0] or info[0] == data[0] - 1):
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+
+                if found_noun_match is False:
+                    unmatched_third_person += 1
+
+            elif info[3] is 'PP':
+                #print('plural')
+
+                found_noun_match = False
+
+                for data in third_person_pronouns:
+                    if data[3] in ['NNPS', 'NNS'] and (info[0] == data[0] or info[0] == data[0] - 1):
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+
+                if found_noun_match is False:
+                    unmatched_third_person += 1
+
+            else:
+                pass
+
+        print('Unmatched third person: ', str(unmatched_third_person))
+
+        return unmatched_third_person
 
 
     def parse_tree(self, text):
@@ -295,8 +388,6 @@ class EssayGrader:
             return self._helper_compute_verb_score(5)
 
     def compute_sentence_formation_score(self):
-        # return a negative value from 1.0 to 0.0
-        #return round(self.fragment_count/float(self.sentence_count), 2) # replaced this with code below
         fragment_error_score=self.fragment_count
         if fragment_error_score >=4:
             return self._helper_compute_verb_score(1)
@@ -309,10 +400,18 @@ class EssayGrader:
         else: 
             return self._helper_compute_verb_score(5)
 
-
     def compute_essay_coherent_score(self):
-        #get pronouns remove anything that isnt third person
-        return 0
+        # TODO need to map to 1 to 5 scale
+        if self.third_person_unmatched_count >= 9:
+            return self._helper_compute_verb_score(1)
+        elif self.third_person_unmatched_count >= 6:
+            return self._helper_compute_verb_score(2)
+        elif self.third_person_unmatched_count >= 3:
+            return self._helper_compute_verb_score(3)
+        elif self.third_person_unmatched_count >= 1:
+            return self._helper_compute_verb_score(4)
+        else:
+            return self._helper_compute_verb_score(5)
 
     def compute_final_score(self):
         a = self.essay_length_score
@@ -324,7 +423,6 @@ class EssayGrader:
         dii = self.essay_answer_score
 
         # formula given by project part 1
-        # TODO verify its the same for part 2
         return round((2 * a) - b + ci + cii + (2 * ciii) + (2 * di) + (3 * dii), 2)
 
     def determine_classifier(self):
