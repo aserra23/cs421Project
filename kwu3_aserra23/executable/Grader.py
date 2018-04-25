@@ -270,6 +270,8 @@ class EssayGrader:
         new_value = int(value * (self.word_count / 280) * (self.verb_count/45))
         if new_value > 5:
             return 5
+        if new_value <1:      #added this for score that is less than 1 b/c score range is [1,5]
+            return 1
         return new_value
 
     def compute_verb_score(self):
@@ -294,7 +296,19 @@ class EssayGrader:
 
     def compute_sentence_formation_score(self):
         # return a negative value from 1.0 to 0.0
-        return round(self.fragment_count/float(self.sentence_count), 2)
+        #return round(self.fragment_count/float(self.sentence_count), 2) # replaced this with code below
+        fragment_error_score=self.fragment_count
+        if fragment_error_score >=4:
+            return self._helper_compute_verb_score(1)
+        elif fragment_error_score >=3:
+            return self._helper_compute_verb_score(2)
+        elif fragment_error_score >=2:
+            return self._helper_compute_verb_score(3)
+        elif fragment_error_score >=1:
+            return self._helper_compute_verb_score(4)
+        else: 
+            return self._helper_compute_verb_score(5)
+
 
     def compute_essay_coherent_score(self):
         #get pronouns remove anything that isnt third person
