@@ -17,14 +17,14 @@ class EssayGrader:
     subject_tags_P = ['NNS', 'NNPS']
     subject_tags_S = ['NN', 'NNP']
     PRP_words = ['you', 'You', 'we', 'We', 'they', 'They', 'I', 'i']
-    
+
     third_person_single_pronouns_male = ['he', 'his', 'him']
     third_person_single_pronouns_female = ['she', 'hers', 'her']
     third_person_single_pronouns_neutral = ['it']
     third_person_plural_pronouns = ['they', 'them', 'their']
 
     noun_tag_set = ['NNPS', 'NNS', 'NNP', 'NN']
-    
+
     wrong_verb_combo = ['TO VBD', 'TO VBG', 'TO VBN', 'TO VBZ', 'MD VBD', 'MD VBG', 'MD VBN', 'MD VBZ', 'VBZ VB', 'VBZ VBD', 'VBZ VBP', 'VBZ VBZ', 'VBP VB', 'VBP VBD', 'VBP VBP', 'VBP VBZ']
     wrong_sub_v_combo = ['NN VB', 'NN VBP', 'NNS VBZ', 'NNP VB', 'NNP VBP', 'NNPS VBZ','PRPP VBZ', 'PRPS VB', 'PRPS VBP']
 
@@ -178,9 +178,9 @@ class EssayGrader:
                 frag_count += 1
         print('fragmented sentences: ', str(frag_count))
         # TODO Should we keep this negative
-        return -float(frag_count)
+        return frag_count
 
-    def count_third_person_pronouns_that_map_to_entity(self,tagged_sent_tokens):
+    def count_third_person_pronouns_that_map_to_entity(self, tagged_sent_tokens):
         reverse_sentence_order = [sentence[::-1] for sentence in tagged_sent_tokens[::-1]]
 
         sentence_count = len(reverse_sentence_order)
@@ -224,7 +224,7 @@ class EssayGrader:
             info = third_person_pronouns.pop(0)
 
             if info[3] is 'SPM':
-                #print('male')
+                # print('male')
 
                 found_noun_match = False
 
@@ -238,7 +238,7 @@ class EssayGrader:
                     unmatched_third_person += 1
 
             elif info[3] is 'SPF':
-                #print('female')
+                # print('female')
 
                 found_noun_match = False
 
@@ -252,7 +252,7 @@ class EssayGrader:
                     unmatched_third_person += 1
 
             elif info[3] is 'SPN':
-                #print('neutral')
+                # print('neutral')
 
                 found_noun_match = False
 
@@ -266,7 +266,7 @@ class EssayGrader:
                     unmatched_third_person += 1
 
             elif info[3] is 'PP':
-                #print('plural')
+                # print('plural')
 
                 found_noun_match = False
 
@@ -286,10 +286,9 @@ class EssayGrader:
 
         return unmatched_third_person
 
-
     def parse_tree(self, text):
-        os.environ['STANFORD_PARSER']= os.getcwd() + "/stanford-parser-full-2018-02-27"
-        os.environ['STANFORD_MODELS']= os.getcwd() + "/stanford-parser-full-2018-02-27"
+        os.environ['STANFORD_PARSER'] = os.getcwd() + "/stanford-parser-full-2018-02-27"
+        os.environ['STANFORD_MODELS'] = os.getcwd() + "/stanford-parser-full-2018-02-27"
 
         stanford_parser = StanfordParser(model_path="edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz")
         result = stanford_parser.raw_parse(text)
@@ -303,6 +302,7 @@ class EssayGrader:
         self.verb_score = self.compute_verb_score()
         self.sentence_formation_score = self.compute_sentence_formation_score()
         self.essay_coherent_score = self.compute_essay_coherent_score()
+        # don't need to do this so just return 0
         self.essay_answer_score = 0
 
         # get final score after computing sub-scores
@@ -363,7 +363,7 @@ class EssayGrader:
         new_value = int(value * (self.word_count / 280) * (self.verb_count/45))
         if new_value > 5:
             return 5
-        if new_value <1:      #added this for score that is less than 1 b/c score range is [1,5]
+        if new_value < 1:      # added this for score that is less than 1 b/c score range is [1,5]
             return 1
         return new_value
 
@@ -388,16 +388,16 @@ class EssayGrader:
             return self._helper_compute_verb_score(5)
 
     def compute_sentence_formation_score(self):
-        fragment_error_score=self.fragment_count
-        if fragment_error_score >=4:
+        fragment_error_score = self.fragment_count
+        if fragment_error_score >= 4:
             return self._helper_compute_verb_score(1)
-        elif fragment_error_score >=3:
+        elif fragment_error_score >= 3:
             return self._helper_compute_verb_score(2)
-        elif fragment_error_score >=2:
+        elif fragment_error_score >= 2:
             return self._helper_compute_verb_score(3)
-        elif fragment_error_score >=1:
+        elif fragment_error_score >= 1:
             return self._helper_compute_verb_score(4)
-        else: 
+        else:
             return self._helper_compute_verb_score(5)
 
     def compute_essay_coherent_score(self):
@@ -428,7 +428,7 @@ class EssayGrader:
     def determine_classifier(self):
         if self.sentence_count < 10:
             self.final_grade = 'LOW'
-        elif self.final_score >= 12:
+        elif self.final_score >= 30:
             self.final_grade = 'HIGH'
         else:
             self.final_grade = 'LOW'
