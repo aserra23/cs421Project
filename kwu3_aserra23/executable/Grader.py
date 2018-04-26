@@ -203,7 +203,7 @@ class EssayGrader:
                 tag = sentence[word_tag_index][tag_index]
 
                 if word in self.third_person_single_pronouns_male:
-                    third_person_pronouns.append([sentence_index, word, word_tag_index, 'SPM'])
+                    third_person_pronouns.append([sentence_index, word_tag_index, word, 'SPM'])
                     total_third_person_count += 1
                 elif word in self.third_person_single_pronouns_female:
                     third_person_pronouns.append([sentence_index, word_tag_index, word, 'SPF'])
@@ -217,6 +217,8 @@ class EssayGrader:
                 elif tag in self.noun_tag_set:
                     third_person_pronouns.append([sentence_index, word_tag_index, word, tag])
                     total_nouns += 1
+                elif word in ['himself', 'herself', 'itself', 'themselves']:
+                    third_person_pronouns.append([sentence_index, word_tag_index, word, tag])
 
         unmatched_third_person = 0
 
@@ -233,6 +235,17 @@ class EssayGrader:
                         found_noun_match = True
                         data[3] = ''
                         break
+                    elif info[2] == 'his' and data[2] == 'himself' and info[0] == data[0]:
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+                    elif info[2] == 'his' and data[2] == 'he' and info[0] == data[0]:
+                        found_noun_match = True
+                        break
+                    elif data[2] in ['person', 'someone'] and data[3] == 'NN' and (info[0] == data[0] or info[0] == data[0] - 1):
+                        found_noun_match = True
+                        data[3] = ''
+                        break
 
                 if found_noun_match is False:
                     unmatched_third_person += 1
@@ -244,6 +257,17 @@ class EssayGrader:
 
                 for data in third_person_pronouns:
                     if data[3] == 'NNP' and (info[0] == data[0] or info[0] == data[0] - 1):
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+                    elif info[2] == 'her' and data[2] == 'herself' and info[0] == data[0]:
+                        found_noun_match = True
+                        data[3] = ''
+                        break
+                    elif info[2] == 'her' and data[2] == 'she' and info[0] == data[0]:
+                        found_noun_match = True
+                        break
+                    elif data[2] in ['person', 'someone'] and data[3] == 'NN' and (info[0] == data[0] or info[0] == data[0] - 1):
                         found_noun_match = True
                         data[3] = ''
                         break
@@ -271,7 +295,12 @@ class EssayGrader:
                 found_noun_match = False
 
                 for data in third_person_pronouns:
-                    if data[3] in ['NNPS', 'NNS'] and (info[0] == data[0] or info[0] == data[0] - 1):
+
+                    if info[2] == 'their' and info[0] == data[0] and data[2] in ['they', 'them']:
+                        # or info[0] == data[0] - 1
+                        found_noun_match = True
+                        break
+                    elif data[3] in ['NNPS', 'NNS'] and (info[0] == data[0] or info[0] == data[0] - 1):
                         found_noun_match = True
                         data[3] = ''
                         break
@@ -402,13 +431,13 @@ class EssayGrader:
 
     def compute_essay_coherent_score(self):
         # TODO need to map to 1 to 5 scale
-        if self.third_person_unmatched_count >= 9:
+        if self.third_person_unmatched_count >= 8:
             return self._helper_compute_verb_score(1)
         elif self.third_person_unmatched_count >= 6:
             return self._helper_compute_verb_score(2)
-        elif self.third_person_unmatched_count >= 3:
+        elif self.third_person_unmatched_count >= 4:
             return self._helper_compute_verb_score(3)
-        elif self.third_person_unmatched_count >= 1:
+        elif self.third_person_unmatched_count >= 2:
             return self._helper_compute_verb_score(4)
         else:
             return self._helper_compute_verb_score(5)
@@ -428,7 +457,7 @@ class EssayGrader:
     def determine_classifier(self):
         if self.sentence_count < 10:
             self.final_grade = 'LOW'
-        elif self.final_score >= 30:
+        elif self.final_score >= 31:
             self.final_grade = 'HIGH'
         else:
             self.final_grade = 'LOW'
